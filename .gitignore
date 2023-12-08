@@ -1,0 +1,10 @@
+/.idea
+/node_modules
+/vendor/*
+!/vendor/composer
+!/vendor/.htaccess
+!/vendor/autoload.php
+!/vendor/index.php
+sonar-project.properties
+.php-cs-fixer.cache
+.php_cs.cache

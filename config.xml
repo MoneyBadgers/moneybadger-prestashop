@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+    <name>cryptoconvert</name>
+    <displayName><![CDATA[CryptoConvert]]></displayName>
+    <version><![CDATA[0.9.0]]></version>
+    <description><![CDATA[CryptoConvert payment module for PrestaShop]]></description>
+    <author><![CDATA[CryptoConvert Pty Ltd]]></author>
+    <tab><![CDATA[payments_gateways]]></tab>
+    <is_configurable>1</is_configurable>
+    <need_instance>1</need_instance>
+	<limited_countries></limited_countries>
+</module>
