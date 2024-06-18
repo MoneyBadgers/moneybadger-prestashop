@@ -1,27 +1,8 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Academic Free License 3.0 (AFL-3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/AFL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/AFL-3.0 Academic Free License 3.0 (AFL-3.0)
- */
-
-/**
  * This Controller receive customer after approval on bank payment page
  */
-class CryptoConvertValidationModuleFrontController extends ModuleFrontController
+class MoneyBadgerValidationModuleFrontController extends ModuleFrontController
 {
     /**
      * @var PaymentModule
@@ -138,9 +119,9 @@ class CryptoConvertValidationModuleFrontController extends ModuleFrontController
 
         switch ($option) {
             case 'offline':
-                // Ensure CryptoConvert::CONFIG_OS_OFFLINE is defined before using it
-                if (defined('CryptoConvert::CONFIG_OS_OFFLINE')) {
-                    $orderStateId = (int) Configuration::get(CryptoConvert::CONFIG_OS_OFFLINE);
+                // Ensure MoneyBadger::CONFIG_OS_OFFLINE is defined before using it
+                if (defined('MoneyBadger::CONFIG_OS_OFFLINE')) {
+                    $orderStateId = (int) Configuration::get(MoneyBadger::CONFIG_OS_OFFLINE);
                 }
                 break;
             case 'external':

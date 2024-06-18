@@ -20,7 +20,7 @@
 {extends file='customer/page.tpl'}
 
 {block name='page_title'}
-  <h1 class="h1">{$moduleDisplayName} - {l s='Transactions' mod='cryptoconvert'}</h1>
+  <h1 class="h1">{$moduleDisplayName} - {l s='Transactions' mod='moneybadger'}</h1>
 {/block}
 
 {block name='page_content'}
@@ -28,11 +28,11 @@
     <table class="table table-striped table-bordered hidden-sm-down">
       <thead class="thead-default">
       <tr>
-        <th>{l s='Order reference' mod='cryptoconvert'}</th>
-        <th>{l s='Payment method' mod='cryptoconvert'}</th>
-        <th>{l s='Transaction reference' mod='cryptoconvert'}</th>
-        <th>{l s='Amount' mod='cryptoconvert'}</th>
-        <th>{l s='Date' mod='cryptoconvert'}</th>
+        <th>{l s='Order reference' mod='moneybadger'}</th>
+        <th>{l s='Payment method' mod='moneybadger'}</th>
+        <th>{l s='Transaction reference' mod='moneybadger'}</th>
+        <th>{l s='Amount' mod='moneybadger'}</th>
+        <th>{l s='Date' mod='moneybadger'}</th>
       </tr>
       </thead>
       <tbody>
@@ -48,6 +48,6 @@
       </tbody>
     </table>
   {else}
-    <div class="alert alert-info">{l s='No transaction' mod='cryptoconvert'}</div>
+    <div class="alert alert-info">{l s='No transaction' mod='moneybadger'}</div>
   {/if}
 {/block}

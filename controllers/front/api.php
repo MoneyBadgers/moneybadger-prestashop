@@ -1,6 +1,6 @@
 <?php
 
-class cryptoconvertAPIModuleFrontController extends ModuleFrontController
+class moneybadgerAPIModuleFrontController extends ModuleFrontController
 {
     public function displayAjax()
     {
@@ -20,7 +20,7 @@ class cryptoconvertAPIModuleFrontController extends ModuleFrontController
             exit;
         }
 
-        if ($order->module !== 'cryptoconvert') {
+        if ($order->module !== 'moneybadger') {
             // exit with http status 404
             header('HTTP/1.1 404 Not Found');
             exit;

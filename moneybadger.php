@@ -24,15 +24,15 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-class CryptoConvert extends PaymentModule
+class MoneyBadger extends PaymentModule
 {
-    const CONFIG_PO_EXTERNAL_ENABLED = 'CRYPTOCONVERT_PO_EXTERNAL_ENABLED';
+    const CONFIG_PO_EXTERNAL_ENABLED = 'MONEYBADGER_PO_EXTERNAL_ENABLED';
 
-    const CONFIG_PO_IFRAME_ENABLED = 'CRYPTOCONVERT_PO_IFRAME_ENABLED';
-    const MODULE_ADMIN_CONTROLLER = 'AdminConfigureCryptoConvert';
+    const CONFIG_PO_IFRAME_ENABLED = 'MONEYBADGER_PO_IFRAME_ENABLED';
+    const MODULE_ADMIN_CONTROLLER = 'AdminConfigureMoneyBadger';
 
-    const ORDER_STATE_CAPTURE_WAITING = 'CRYPTOCONVERT_CAPTURE_WAITING';
-    const ORDER_STATE_CAPTURE_TIMEDOUT = 'CRYPTOCONVERT_CAPTURE_TIMEDOUT';
+    const ORDER_STATE_CAPTURE_WAITING = 'MONEYBADGER_CAPTURE_WAITING';
+    const ORDER_STATE_CAPTURE_TIMEDOUT = 'MONEYBADGER_CAPTURE_TIMEDOUT';
     // cancelled and paid statuses are built-in
 
     const PAYMENT_STATUS_REQUESTED = 'requested';
@@ -44,12 +44,12 @@ class CryptoConvert extends PaymentModule
         [
             'id' => self::ORDER_STATE_CAPTURE_WAITING,
             'color' => '#34209E',
-            'description' => 'Waiting for CryptoConvert capture',
+            'description' => 'Waiting for MoneyBadger capture',
         ],
         [
             'id' => self::ORDER_STATE_CAPTURE_TIMEDOUT,
             'color' => '#E74C3C',
-            'description' => 'CryptoConvert capture timed out',
+            'description' => 'MoneyBadger capture timed out',
         ],
     ];
 
@@ -69,10 +69,10 @@ class CryptoConvert extends PaymentModule
 
     public function __construct()
     {
-        $this->name = 'cryptoconvert';
+        $this->name = 'moneybadger';
         $this->tab = 'payments_gateways';
         $this->version = '0.9.0';
-        $this->author = 'CryptoConvert Pty Ltd';
+        $this->author = 'MoneyBadger (Pty) Ltd';
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->ps_versions_compliancy = [
@@ -88,8 +88,8 @@ class CryptoConvert extends PaymentModule
 
         parent::__construct();
 
-        $this->displayName = $this->l('CryptoConvert');
-        $this->description = $this->l('Accept crypto payments with CryptoConvert');
+        $this->displayName = $this->l('MoneyBadger');
+        $this->description = $this->l('Accept crypto payments with MoneyBadger');
     }
 
     /**
@@ -256,7 +256,7 @@ class CryptoConvert extends PaymentModule
             'moduleLogoSrc' => $this->getPathUri() . 'cryptoconvert-config-icon.png',
         ]);
 
-        return $this->context->smarty->fetch('module:cryptoconvert/views/templates/hook/displayAdminOrderLeft.tpl');
+        return $this->context->smarty->fetch('module:moneybadger/views/templates/hook/displayAdminOrderLeft.tpl');
     }
 
     /**
@@ -286,7 +286,7 @@ class CryptoConvert extends PaymentModule
             'moduleLogoSrc' => $this->getPathUri() . 'cryptoconvert-config-icon.png',
         ]);
 
-        return $this->context->smarty->fetch('module:cryptoconvert/views/templates/hook/displayAdminOrderMainBottom.tpl');
+        return $this->context->smarty->fetch('module:moneybadger/views/templates/hook/displayAdminOrderMainBottom.tpl');
     }
 
     /**
@@ -307,7 +307,7 @@ class CryptoConvert extends PaymentModule
             ),
         ]);
 
-        return $this->context->smarty->fetch('module:cryptoconvert/views/templates/hook/displayCustomerAccount.tpl');
+        return $this->context->smarty->fetch('module:moneybadger/views/templates/hook/displayCustomerAccount.tpl');
     }
 
     /**
@@ -343,7 +343,7 @@ class CryptoConvert extends PaymentModule
             'transaction' => $transaction,
         ]);
 
-        return $this->context->smarty->fetch('module:cryptoconvert/views/templates/hook/displayOrderConfirmation.tpl');
+        return $this->context->smarty->fetch('module:moneybadger/views/templates/hook/displayOrderConfirmation.tpl');
     }
 
     /**
@@ -379,7 +379,7 @@ class CryptoConvert extends PaymentModule
             'transaction' => $transaction,
         ]);
 
-        return $this->context->smarty->fetch('module:cryptoconvert/views/templates/hook/displayOrderDetail.tpl');
+        return $this->context->smarty->fetch('module:moneybadger/views/templates/hook/displayOrderDetail.tpl');
     }
 
     /**
@@ -419,7 +419,7 @@ class CryptoConvert extends PaymentModule
             ),
         ]);
 
-        return $this->context->smarty->fetch('module:cryptoconvert/views/templates/hook/displayPaymentReturn.tpl');
+        return $this->context->smarty->fetch('module:moneybadger/views/templates/hook/displayPaymentReturn.tpl');
     }
 
     /**
@@ -461,7 +461,7 @@ class CryptoConvert extends PaymentModule
             'transaction' => $transaction,
         ]);
 
-        return $this->context->smarty->fetch('module:cryptoconvert/views/templates/hook/displayPDFInvoice.tpl');
+        return $this->context->smarty->fetch('module:moneybadger/views/templates/hook/displayPDFInvoice.tpl');
     }
 
     /**
@@ -498,9 +498,9 @@ class CryptoConvert extends PaymentModule
     public function getIframePaymentOption()
     {
         $iframeOption = new PaymentOption();
-        $description = 'Pay with CryptoConvert';
-        if (!empty(Configuration::get('CRYPTOCONVERT_LABEL'))) {
-            $description = Configuration::get('CRYPTOCONVERT_LABEL');
+        $description = 'Pay with MoneyBadger';
+        if (!empty(Configuration::get('MONEYBADGER_LABEL'))) {
+            $description = Configuration::get('MONEYBADGER_LABEL');
         }
         $iframeOption->setCallToActionText($this->l($description))
             ->setAction($this->context->link->getModuleLink($this->name, 'iframe', [], true))

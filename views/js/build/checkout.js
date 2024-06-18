@@ -1,6 +1,6 @@
 $(function() {
-    var orderStatusURL = $("#cryptoconvert-payment-iframe").data("cryptoconvert-status-url");
-    var orderConfirmationURL = $("#cryptoconvert-payment-iframe").data("cryptoconvert-confirmation-url");
+    var orderStatusURL = $("#moneybadger-payment-iframe").data("moneybadger-status-url");
+    var orderConfirmationURL = $("#moneybadger-payment-iframe").data("moneybadger-confirmation-url");
 
     if (!orderStatusURL || !orderConfirmationURL) {
         return;

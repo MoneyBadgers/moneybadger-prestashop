@@ -1,13 +1,13 @@
 {
     "type": "prestashop-module",
-    "name": "prestashop/cryptoconvert",
-    "description": "PrestaShop module cryptoconvert",
-    "homepage": "https://github.com/PrestaShop/cryptoconvert",
+    "name": "prestashop/moneybadger",
+    "description": "PrestaShop module moneybadger",
+    "homepage": "https://github.com/MoneyBadgers/moneybadger-prestashop",
     "license": "AFL-3.0",
     "authors": [
         {
-            "name": "PrestaShop SA",
-            "email": "contact@prestashop.com"
+            "name": "MoneyBadger",
+            "email": "info@moneybadger.co.za"
         }
     ],
     "config": {
@@ -23,7 +23,7 @@
     "autoload": {
         "classmap": [
             "controllers",
-            "cryptoconvert.php"
+            "moneybadger.php"
         ]
     },
     "scripts": {

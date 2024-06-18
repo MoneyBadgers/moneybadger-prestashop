@@ -1,9 +1,6 @@
 <?php
 
-/**
- * @since 1.0.0
- */
-class cryptoconvertIframeModuleFrontController extends ModuleFrontController
+class moneybadgerIframeModuleFrontController extends ModuleFrontController
 {
     /**
      * @var PaymentModule
@@ -16,8 +13,8 @@ class cryptoconvertIframeModuleFrontController extends ModuleFrontController
     public function postProcess()
     {
         $this->context->controller->registerJavascript(
-            'cryptoconvert-payments',
-            'modules/cryptoconvert/views/js/build/checkout.js'
+            'moneybadger-payments',
+            'modules/moneybadger/views/js/build/checkout.js'
         );
 
         if (false === $this->checkIfContextIsValid() || false === $this->checkIfPaymentOptionIsAvailable()) {
@@ -51,8 +48,8 @@ class cryptoconvertIframeModuleFrontController extends ModuleFrontController
         $orderTotal = (float) $this->context->cart->getOrderTotal(true, Cart::BOTH);
         $amountInCents = $orderTotal * 100;
 
-        $merchantAPIKey = Configuration::get('CRYPTOCONVERT_MERCHANT_API_KEY', '');
-        $merchantCode = Configuration::get('CRYPTOCONVERT_MERCHANT_CODE');
+        $merchantAPIKey = Configuration::get('MONEYBADGER_MERCHANT_API_KEY', '');
+        $merchantCode = Configuration::get('MONEYBADGER_MERCHANT_CODE');
 
         $orderState = $this->getOrderState();
 
@@ -117,7 +114,7 @@ class cryptoconvertIframeModuleFrontController extends ModuleFrontController
 
         // load the payment form
         $this->context->smarty->assign([
-            'src' => 'https://pay' . (Configuration::get('CRYPTOCONVERT_TEST_MODE', false) ? '.staging' : '') . '.cryptoqr.co.za/?' . http_build_query(
+            'src' => 'https://pay' . (Configuration::get('MONEYBADGER_TEST_MODE', false) ? '.staging' : '') . '.cryptoqr.net/?' . http_build_query(
                 [
                     'amountCents' => $amountInCents,
                     'orderId' => $orderId,
@@ -130,7 +127,7 @@ class cryptoconvertIframeModuleFrontController extends ModuleFrontController
             'orderConfirmationURL' => $orderConfirmationURL,
         ]);
 
-        $this->setTemplate('module:cryptoconvert/views/templates/front/iframe.tpl');
+        $this->setTemplate('module:moneybadger/views/templates/front/iframe.tpl');
     }
 
     /**
@@ -176,7 +173,7 @@ class cryptoconvertIframeModuleFrontController extends ModuleFrontController
      */
     private function getOrderState()
     {
-        return (int) Configuration::get(CryptoConvert::ORDER_STATE_CAPTURE_WAITING);
+        return (int) Configuration::get(MoneyBadger::ORDER_STATE_CAPTURE_WAITING);
     }
 
     /**

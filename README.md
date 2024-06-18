@@ -1,15 +1,15 @@
-# CryptoConvert payments for PrestaShop
+# MoneyBadger payments for PrestaShop
 
-## CryptoConvert module v0.9.0 for PrestaShop v8.1.0
+## MoneyBadger module v0.9.0 for PrestaShop v8.1.0
 
-This is the CryptoConvert module for PrestaShop. Please feel free to [contact the CrytoConvert support team](info@cryptoconvert.co.za) or ([@CryptoConverted](https://twitter.com/cryptoconverted)) should you require any assistance.
+This is the MoneyBadger payments module for PrestaShop. Please feel free to [contact the MoneyBadger support team](info@moneybadger.co.za) or ([@MoneyBadgerPay](https://twitter.com/MoneyBadgerPay)) should you require any assistance.
 
 ## Installation
 1. Login to the PrestaShop Admin dashboard.
 2. Navigate to **Modules** -> **Module Manager**.
 3. Click the **Upload a module** button.
-4. Click **Drop your module archive here or select file** and select **[cryptoconvert.zip].
-5. Click the **Configure** button. The CryptoConvert configuration options will now display.
+4. Click **Drop your module archive here or select file** and select **[moneybadger-prestashop.zip].
+5. Click the **Configure** button. The MoneyBadger configuration options will now display.
 6. Enter your preferred details and click **Save Changes** at the bottom of the page.
 
 ## Collaboration

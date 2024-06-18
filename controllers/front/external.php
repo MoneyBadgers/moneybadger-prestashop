@@ -1,27 +1,8 @@
 <?php
 /**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Academic Free License 3.0 (AFL-3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/AFL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/AFL-3.0 Academic Free License 3.0 (AFL-3.0)
- */
-
-/**
  * This Controller simulate an external payment gateway
  */
-class CryptoConvertExternalModuleFrontController extends ModuleFrontController
+class MoneyBadgerExternalModuleFrontController extends ModuleFrontController
 {
     /**
      * {@inheritdoc}
@@ -64,7 +45,7 @@ class CryptoConvertExternalModuleFrontController extends ModuleFrontController
             'action' => $this->context->link->getModuleLink($this->module->name, 'validation', ['option' => 'external'], true),
         ]);
 
-        $this->setTemplate('module:cryptoconvert/views/templates/front/external.tpl');
+        $this->setTemplate('module:moneybadger/views/templates/front/external.tpl');
     }
 
     /**
@@ -88,7 +69,7 @@ class CryptoConvertExternalModuleFrontController extends ModuleFrontController
      */
     private function checkIfPaymentOptionIsAvailable()
     {
-        if (!Configuration::get(CryptoConvert::CONFIG_PO_EXTERNAL_ENABLED)) {
+        if (!Configuration::get(MoneyBadger::CONFIG_PO_EXTERNAL_ENABLED)) {
             return false;
         }
 
