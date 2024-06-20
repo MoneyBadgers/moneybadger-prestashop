@@ -77,7 +77,7 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
 
         $merchantAPIKey = Configuration::get('MONEYBADGER_MERCHANT_API_KEY', '');
 
-        $apiBase = 'https://api' . (Configuration::get('MONEYBADGER_TEST_MODE', false) ? 'staging.' : '') . 'cryptoqr.co.za/api/v2';
+        $apiBase = 'https://api' . (Configuration::get('MONEYBADGER_TEST_MODE', false) ? 'staging.' : '') . 'cryptoqr.net/api/v2';
 
         try {
             $response = $client->request('GET', $apiBase . '/invoices/' . $invoiceId, [

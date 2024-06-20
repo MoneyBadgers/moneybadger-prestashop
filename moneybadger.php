@@ -72,7 +72,7 @@ class MoneyBadger extends PaymentModule
         $this->name = 'moneybadger';
         $this->tab = 'payments_gateways';
         $this->version = '0.9.0';
-        $this->author = 'MoneyBadger (Pty) Ltd';
+        $this->author = 'MoneyBadger';
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
         $this->ps_versions_compliancy = [
@@ -88,8 +88,8 @@ class MoneyBadger extends PaymentModule
 
         parent::__construct();
 
-        $this->displayName = $this->l('MoneyBadger');
-        $this->description = $this->l('Accept crypto payments with MoneyBadger');
+        $this->displayName = $this->l('MoneyBadger Crypto Payments');
+        $this->description = $this->l('Accept crypto payments from Bitcoin Lightning, Luno, Valr or Binance wallets');
     }
 
     /**
@@ -253,7 +253,7 @@ class MoneyBadger extends PaymentModule
         $this->context->smarty->assign([
             'moduleName' => $this->name,
             'moduleDisplayName' => $this->displayName,
-            'moduleLogoSrc' => $this->getPathUri() . 'cryptoconvert-config-icon.png',
+            'moduleLogoSrc' => $this->getPathUri() . 'moneybadger-config-icon.png',
         ]);
 
         return $this->context->smarty->fetch('module:moneybadger/views/templates/hook/displayAdminOrderLeft.tpl');
@@ -283,7 +283,7 @@ class MoneyBadger extends PaymentModule
         $this->context->smarty->assign([
             'moduleName' => $this->name,
             'moduleDisplayName' => $this->displayName,
-            'moduleLogoSrc' => $this->getPathUri() . 'cryptoconvert-config-icon.png',
+            'moduleLogoSrc' => $this->getPathUri() . 'moneybadger-config-icon.png',
         ]);
 
         return $this->context->smarty->fetch('module:moneybadger/views/templates/hook/displayAdminOrderMainBottom.tpl');
@@ -300,7 +300,7 @@ class MoneyBadger extends PaymentModule
     {
         $this->context->smarty->assign([
             'moduleDisplayName' => $this->displayName,
-            'moduleLogoSrc' => $this->getPathUri() . 'cryptoconvert-config-icon.png',
+            'moduleLogoSrc' => $this->getPathUri() . 'moneybadger-config-icon.png',
             'transactionsLink' => $this->context->link->getModuleLink(
                 $this->name,
                 'account'
@@ -498,13 +498,13 @@ class MoneyBadger extends PaymentModule
     public function getIframePaymentOption()
     {
         $iframeOption = new PaymentOption();
-        $description = 'Pay with MoneyBadger';
+        $description = 'Pay with Crypto - Bitcoin Lightning, Luno, Valr or Binance';
         if (!empty(Configuration::get('MONEYBADGER_LABEL'))) {
             $description = Configuration::get('MONEYBADGER_LABEL');
         }
         $iframeOption->setCallToActionText($this->l($description))
             ->setAction($this->context->link->getModuleLink($this->name, 'iframe', [], true))
-            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/option/cryptoconvert-icon.png'));
+            ->setLogo(Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/option/moneybadger-icon.png'));
 
         return $iframeOption;
     }
