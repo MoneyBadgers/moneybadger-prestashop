@@ -1,0 +1,46 @@
+services:
+  presta-mysql:
+    container_name: presta-mysql
+    image: mysql:5.7
+    platform: linux/x86_64
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: prestashop
+    networks:
+      - prestashop_network
+    volumes:
+      - dbdata:/var/lib/mysql
+  prestashop:
+    container_name: prestashop
+    image: prestashop/prestashop:latest
+    platform: linux/x86_64
+    restart: unless-stopped
+    depends_on:
+      - presta-mysql
+    ports:
+      - 8080:80
+    environment:
+      DB_SERVER: presta-mysql
+      DB_NAME: prestashop
+      DB_USER: root
+      DB_PASSWD: admin
+      PS_FOLDER_ADMIN: admin4577 # username: demo@prestashop.com, password: prestashop_demo
+      PS_FOLDER_INSTALL: install4577
+      PS_INSTALL_AUTO: 1
+      PS_DOMAIN: localhost:8080
+    networks:
+      - prestashop_network
+    volumes:
+      # - type: bind
+      #   source: ./modules/moneybadger # local path to the module (Can also just install with .zip on the admin interface)
+      #   target: /var/www/html/modules/moneybadger # path to be mounted in the container
+      # - type: bind
+      #   source: ./themes/myTheme # local path to the theme
+      #   target:  /var/www/html/themes/myTheme # path to be mounted in the container
+      - psdata:/var/www/html
+networks:
+  prestashop_network:
+volumes:
+  psdata:
+  dbdata:
