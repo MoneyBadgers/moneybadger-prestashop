@@ -1,0 +1,34 @@
+name: Create Release Archive
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Prepare directory # Files need to be in a folder with a name that matches the main .php file
+        run: |
+          mkdir moneybadger
+          mv README.md moneybadger
+          mv LICENSE moneybadger
+          mv *.php moneybadger
+          mv logo.png moneybadger
+          mv controllers moneybadger
+          mv views moneybadger
+          
+      - name: Zip files
+        run: zip -r moneybadger-prestashop.zip moneybadger
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: moneybadger-prestashop.zip
+          asset_name: moneybadger-prestashop.zip
+          asset_content_type: application/zip
