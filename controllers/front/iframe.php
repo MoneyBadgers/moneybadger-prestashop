@@ -120,6 +120,7 @@ class moneybadgerIframeModuleFrontController extends ModuleFrontController
                     'orderId' => $orderId,
                     'merchantCode' => $merchantCode,
                     'statusWebhookUrl' => $statusWebhookUrl,
+                    'orderDescription' => $merchantCode . ' - Order #' . $orderId,
                 ]
             ),
             'invoiceId' => $orderId,
