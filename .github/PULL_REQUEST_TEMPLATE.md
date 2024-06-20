@@ -1,5 +1,5 @@
 <!-----------------------------------------------------------------------------
-Thank you for contributing to the PrestaShop project! 
+Thank you for contributing to the MoneyBadger Prestashop Module project!
 
 Please take the time to edit the "Answers" rows below with the necessary information.
 
