@@ -32,3 +32,5 @@ jobs:
           asset_path: moneybadger-prestashop.zip
           asset_name: moneybadger-prestashop.zip
           asset_content_type: application/zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
