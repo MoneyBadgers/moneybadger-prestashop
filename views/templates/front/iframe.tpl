@@ -5,7 +5,7 @@
       id="moneybadger-payment-iframe"
       src="{$src}"
       width="100%"
-      height="500px"
+      height="700px"
       data-moneybadger-status-url="{$orderStatusURL}"
       data-moneybadger-confirmation-url="{$orderConfirmationURL}"
     ></iframe>
