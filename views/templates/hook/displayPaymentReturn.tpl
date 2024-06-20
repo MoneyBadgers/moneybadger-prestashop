@@ -19,10 +19,10 @@
 
 <section id="{$moduleName}-displayPaymentReturn">
   {if !empty($transaction)}
-    <p>{l s='Your transaction reference is %transaction%.' mod='cryptoconvert' sprintf=['%transaction%' => $transaction]}</p>
+    <p>{l s='Your transaction reference is %transaction%.' mod='moneybadger' sprintf=['%transaction%' => $transaction]}</p>
   {/if}
   {if $customer.is_logged && !$customer.is_guest}
-    <p><a href="{$transactionsLink}">{l s='See all previous transactions in your account.' mod='cryptoconvert'}</a></p>
+    <p><a href="{$transactionsLink}">{l s='See all previous transactions in your account.' mod='moneybadger'}</a></p>
   {/if}
 </section>
 

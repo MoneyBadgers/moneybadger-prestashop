@@ -3,7 +3,7 @@
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
-class cryptoconvertWebhookModuleFrontController extends ModuleFrontController
+class moneybadgerWebhookModuleFrontController extends ModuleFrontController
 {
     public function postProcess()
     {
@@ -45,13 +45,13 @@ class cryptoconvertWebhookModuleFrontController extends ModuleFrontController
         }
 
         switch ($invoice->status) {
-      case CryptoConvert::PAYMENT_STATUS_CANCELLED:
+      case MoneyBadger::PAYMENT_STATUS_CANCELLED:
         $order->setCurrentState((int) Configuration::get('PS_OS_CANCELED'));
         break;
-      case CryptoConvert::PAYMENT_STATUS_TIMEDOUT:
-        $order->setCurrentState((int) Configuration::get(CryptoConvert::ORDER_STATE_CAPTURE_TIMEDOUT));
+      case MoneyBadger::PAYMENT_STATUS_TIMEDOUT:
+        $order->setCurrentState((int) Configuration::get(MoneyBadger::ORDER_STATE_CAPTURE_TIMEDOUT));
         break;
-      case CryptoConvert::PAYMENT_STATUS_PAID:
+      case MoneyBadger::PAYMENT_STATUS_PAID:
         // mark the order as paid
         if ($orderCurrentState !== (int) Configuration::get('PS_OS_OUTOFSTOCK_PAID')) {
             $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
@@ -63,7 +63,7 @@ class cryptoconvertWebhookModuleFrontController extends ModuleFrontController
     }
 
     /**
-     * Get the invoice from CryptoConvert
+     * Get the invoice from MoneyBadger
      *
      * @param int $invoiceId
      *
@@ -75,9 +75,9 @@ class cryptoconvertWebhookModuleFrontController extends ModuleFrontController
     {
         $client = new Client();
 
-        $merchantAPIKey = Configuration::get('CRYPTOCONVERT_MERCHANT_API_KEY', '');
+        $merchantAPIKey = Configuration::get('MONEYBADGER_MERCHANT_API_KEY', '');
 
-        $apiBase = 'https://' . (Configuration::get('CRYPTOCONVERT_TEST_MODE', false) ? 'staging.' : '') . 'circuit.cryptoconvert.co.za/api/v1';
+        $apiBase = 'https://api' . (Configuration::get('MONEYBADGER_TEST_MODE', false) ? 'staging.' : '') . 'cryptoqr.net/api/v2';
 
         try {
             $response = $client->request('GET', $apiBase . '/invoices/' . $invoiceId, [

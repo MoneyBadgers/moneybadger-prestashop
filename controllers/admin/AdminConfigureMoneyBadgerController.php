@@ -1,23 +1,5 @@
 <?php
-/**
- * Copyright since 2007 PrestaShop SA and Contributors
- * PrestaShop is an International Registered Trademark & Property of PrestaShop SA
- *
- * NOTICE OF LICENSE
- *
- * This source file is subject to the Academic Free License 3.0 (AFL-3.0)
- * that is bundled with this package in the file LICENSE.md.
- * It is also available through the world-wide-web at this URL:
- * https://opensource.org/licenses/AFL-3.0
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@prestashop.com so we can send you a copy immediately.
- *
- * @author    PrestaShop SA <contact@prestashop.com>
- * @copyright Since 2007 PrestaShop SA and Contributors
- * @license   https://opensource.org/licenses/AFL-3.0 Academic Free License 3.0 (AFL-3.0)
- */
-class AdminConfigureCryptoConvertController extends ModuleAdminController
+class AdminConfigureMoneyBadgerController extends ModuleAdminController
 {
     public function __construct()
     {
@@ -38,12 +20,12 @@ class AdminConfigureCryptoConvertController extends ModuleAdminController
 
         $this->fields_options = [
             $this->module->name => [
-                'title' => $this->l('CryptoConvert Settings'),
-                'description' => $this->l('Configure the settings for the CryptoConvert module.'),
+                'title' => $this->l('MoneyBadger Settings'),
+                'description' => $this->l('Configure the settings for the MoneyBadger module.'),
 
                 // Add the path to your logo image here
                 'fields' => [
-                    'CRYPTOCONVERT_TEST_MODE' => [
+                    'MONEYBADGER_TEST_MODE' => [
                         'type' => 'bool',
                         'title' => $this->l('Test Mode'),
                         'validation' => 'isBool',
@@ -51,20 +33,20 @@ class AdminConfigureCryptoConvertController extends ModuleAdminController
                         'required' => false,
                         'default' => false,
                     ],
-                    'CRYPTOCONVERT_MERCHANT_CODE' => [
+                    'MONEYBADGER_MERCHANT_CODE' => [
                         'title' => $this->l('Merchant Code'),
                         'type' => 'text',
                         'required' => true,
                     ],
-                    'CRYPTOCONVERT_MERCHANT_API_KEY' => [
+                    'MONEYBADGER_MERCHANT_API_KEY' => [
                         'title' => $this->l('Merchant API Key'),
                         'type' => 'text',
                         'required' => true,
                     ],
-                    'CRYPTOCONVERT_LABEL' => [
-                        'title' => $this->l('Label'),
+                    'MONEYBADGER_LABEL' => [
+                        'title' => $this->l('Custom Label (leave blank for default)'),
                         'type' => 'text',
-                        'default' => 'Pay with CryptoConvert',
+                        'default' => 'Pay with Crypto - Bitcoin Lightning, Luno, Valr or Binance',
                         'required' => false,
                     ],
                 ],

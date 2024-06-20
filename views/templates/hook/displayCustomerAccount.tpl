@@ -17,9 +17,9 @@
  * @license   https://opensource.org/licenses/AFL-3.0 Academic Free License 3.0 (AFL-3.0)
  *}
 
-<a class="col-lg-4 col-md-6 col-sm-6 col-xs-12" id="cryptoconvert-displayCustomerAccount-link" href="{$transactionsLink}">
+<a class="col-lg-4 col-md-6 col-sm-6 col-xs-12" id="moneybadger-displayCustomerAccount-link" href="{$transactionsLink}">
   <span class="link-item">
     <i class="material-icons">&#xe065;</i>
-    {$moduleDisplayName} - {l s='Transactions' mod='cryptoconvert'}
+    {$moduleDisplayName} - {l s='Transactions' mod='moneybadger'}
   </span>
 </a>
