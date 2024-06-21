@@ -35,10 +35,11 @@ class MoneyBadger extends PaymentModule
     const ORDER_STATE_CAPTURE_TIMEDOUT = 'MONEYBADGER_CAPTURE_TIMEDOUT';
     // cancelled and paid statuses are built-in
 
-    const PAYMENT_STATUS_REQUESTED = 'requested';
-    const PAYMENT_STATUS_PAID = 'paid';
-    const PAYMENT_STATUS_TIMEDOUT = 'timedout';
-    const PAYMENT_STATUS_CANCELLED = 'cancelled';
+    const PAYMENT_STATUS_REQUESTED = 'REQUESTED';
+    const PAYMENT_STATUS_AUTHORIZED = 'AUTHORIZED';
+    const PAYMENT_STATUS_CONFIRMED = 'CONFIRMED';
+    const PAYMENT_STATUS_TIMEDOUT = 'TIMED_OUT';
+    const PAYMENT_STATUS_CANCELLED = 'CANCELLED';
 
     const ORDER_STATES = [
         [

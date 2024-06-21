@@ -8,3 +8,4 @@
 sonar-project.properties
 .php-cs-fixer.cache
 .php_cs.cache
+dist/

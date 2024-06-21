@@ -51,7 +51,7 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
       case MoneyBadger::PAYMENT_STATUS_TIMEDOUT:
         $order->setCurrentState((int) Configuration::get(MoneyBadger::ORDER_STATE_CAPTURE_TIMEDOUT));
         break;
-      case MoneyBadger::PAYMENT_STATUS_PAID:
+      case (MoneyBadger::PAYMENT_STATUS_AUTHORIZED || MoneyBadger::PAYMENT_STATUS_CONFIRMED): // We expect CONFIRMED, but AUTHORIZED is also valid since we will request auto confirmation
         // mark the order as paid
         if ($orderCurrentState !== (int) Configuration::get('PS_OS_OUTOFSTOCK_PAID')) {
             $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
@@ -77,7 +77,7 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
 
         $merchantAPIKey = Configuration::get('MONEYBADGER_MERCHANT_API_KEY', '');
 
-        $apiBase = 'https://api' . (Configuration::get('MONEYBADGER_TEST_MODE', false) ? 'staging.' : '') . 'cryptoqr.net/api/v2';
+        $apiBase = 'https://api' . (Configuration::get('MONEYBADGER_TEST_MODE', false) ? '.staging' : '') . '.cryptoqr.net/api/v2';
 
         try {
             $response = $client->request('GET', $apiBase . '/invoices/' . $invoiceId, [
