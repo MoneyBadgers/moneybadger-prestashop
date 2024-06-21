@@ -1,7 +1,7 @@
 #!/bin/bash
 pushd .
 
-rm -rf dist/moneybadger
+rm -rf dist
 mkdir -p dist/moneybadger
 
 cp -r controllers dist/moneybadger

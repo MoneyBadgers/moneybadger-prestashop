@@ -1,6 +1,6 @@
 # MoneyBadger payments for PrestaShop
 
-## MoneyBadger module v0.9.0 for PrestaShop v8.1.0
+## MoneyBadger module for PrestaShop v8.1.0
 
 This is the MoneyBadger payments module for PrestaShop. Please feel free to [contact the MoneyBadger support team](info@moneybadger.co.za) or ([@MoneyBadgerPay](https://twitter.com/MoneyBadgerPay)) should you require any assistance.
 
