@@ -1,8 +1,5 @@
 <?php
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
-
 class moneybadgerWebhookModuleFrontController extends ModuleFrontController
 {
     public function postProcess()
@@ -27,9 +24,9 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
 
         // check if order is unpaid or already marked paid
         if (
-      $orderCurrentState === (int) Configuration::get('PS_OS_PAYMENT') ||
-      $orderCurrentState === (int) Configuration::get('PS_OS_OUTOFSTOCK_PAID')
-    ) {
+            $orderCurrentState === (int) Configuration::get('PS_OS_PAYMENT') ||
+            $orderCurrentState === (int) Configuration::get('PS_OS_OUTOFSTOCK_PAID')
+        ) {
             exit;
         }
 
@@ -39,27 +36,39 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
         $orderPaymentCollection = $order->getOrderPaymentCollection();
         if ($orderPaymentCollection && $orderPaymentCollection->count()) {
             /** @var OrderPayment $orderPayment */
-            $orderPayment = $orderPaymentCollection->getLast();
+            // $orderPayment = $orderPaymentCollection->getLast();
+            $orderPayment = $this->getLast($orderPaymentCollection);
             $orderPayment->transaction_id = $invoice->id;
             $orderPayment->update();
         }
 
         switch ($invoice->status) {
-      case MoneyBadger::PAYMENT_STATUS_CANCELLED:
-        $order->setCurrentState((int) Configuration::get('PS_OS_CANCELED'));
-        break;
-      case MoneyBadger::PAYMENT_STATUS_TIMEDOUT:
-        $order->setCurrentState((int) Configuration::get(MoneyBadger::ORDER_STATE_CAPTURE_TIMEDOUT));
-        break;
-      case MoneyBadger::PAYMENT_STATUS_PAID:
-        // mark the order as paid
-        if ($orderCurrentState !== (int) Configuration::get('PS_OS_OUTOFSTOCK_PAID')) {
-            $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
+            case MoneyBadger::PAYMENT_STATUS_CANCELLED:
+                $order->setCurrentState((int) Configuration::get('PS_OS_CANCELED'));
+                break;
+            case MoneyBadger::PAYMENT_STATUS_TIMEDOUT:
+                $order->setCurrentState((int) Configuration::get(MoneyBadger::ORDER_STATE_CAPTURE_TIMEDOUT));
+                break;
+            case (MoneyBadger::PAYMENT_STATUS_AUTHORIZED || MoneyBadger::PAYMENT_STATUS_CONFIRMED): // We expect CONFIRMED, but AUTHORIZED is also valid since we will request auto confirmation
+                // mark the order as paid
+                if ($orderCurrentState !== (int) Configuration::get('PS_OS_OUTOFSTOCK_PAID')) {
+                    $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
+                }
+                break;
+            default:
+                break;
         }
-        break;
-      default:
-        break;
     }
+
+    // Implement getLast because it is not available in PrestaShop 1.7
+    public function getLast($collection)
+    {
+        $collection->getAll();
+        if (!count($this)) {
+            return false;
+        }
+
+        return $collection[count($collection) - 1];
     }
 
     /**
@@ -69,37 +78,42 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
      *
      * @return mixed
      *
-     * @throws GuzzleException
+     * @throws Exception if the cURL request fails or returns a non-200 status code
      */
     private function getInvoice($invoiceId)
     {
-        $client = new Client();
-
         $merchantAPIKey = Configuration::get('MONEYBADGER_MERCHANT_API_KEY', '');
 
-        $apiBase = 'https://api' . (Configuration::get('MONEYBADGER_TEST_MODE', false) ? 'staging.' : '') . 'cryptoqr.net/api/v2';
+        $apiBase = 'https://api' . (Configuration::get('MONEYBADGER_TEST_MODE', false) ? '.staging' : '') . '.cryptoqr.net/api/v2';
+        $url = $apiBase . '/invoices/' . $invoiceId;
 
-        try {
-            $response = $client->request('GET', $apiBase . '/invoices/' . $invoiceId, [
-        'headers' => [
-          'Content-Type' => 'application/json',
-          'X-API-Key' => $merchantAPIKey,
-        ],
-      ]);
+        $ch = curl_init();
 
-            $statusCode = $response->getStatusCode();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'X-API-Key: ' . $merchantAPIKey,
+        ]);
 
-            if ($statusCode !== 200) {
-                throw new \Exception("Invoice request failed with status: $statusCode");
-            }
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-            // $invoice->orderId 38
-            // $invoice->status is a string with one of these values: requested, paid, timedout, cancelled
-            $invoice = json_decode($response->getBody());
-
-            return $invoice;
-        } catch (GuzzleException $e) {
-            throw $e;
+        if ($response === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            throw new \Exception("cURL request failed: $error");
         }
+
+        if ($httpCode !== 200) {
+            curl_close($ch);
+            throw new \Exception("Invoice request failed with status: $httpCode");
+        }
+
+        curl_close($ch);
+
+        $invoice = json_decode($response);
+
+        return $invoice;
     }
 }

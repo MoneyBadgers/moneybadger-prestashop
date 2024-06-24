@@ -35,10 +35,11 @@ class MoneyBadger extends PaymentModule
     const ORDER_STATE_CAPTURE_TIMEDOUT = 'MONEYBADGER_CAPTURE_TIMEDOUT';
     // cancelled and paid statuses are built-in
 
-    const PAYMENT_STATUS_REQUESTED = 'requested';
-    const PAYMENT_STATUS_PAID = 'paid';
-    const PAYMENT_STATUS_TIMEDOUT = 'timedout';
-    const PAYMENT_STATUS_CANCELLED = 'cancelled';
+    const PAYMENT_STATUS_REQUESTED = 'REQUESTED';
+    const PAYMENT_STATUS_AUTHORIZED = 'AUTHORIZED';
+    const PAYMENT_STATUS_CONFIRMED = 'CONFIRMED';
+    const PAYMENT_STATUS_TIMEDOUT = 'TIMED_OUT';
+    const PAYMENT_STATUS_CANCELLED = 'CANCELLED';
 
     const ORDER_STATES = [
         [
@@ -71,7 +72,7 @@ class MoneyBadger extends PaymentModule
     {
         $this->name = 'moneybadger';
         $this->tab = 'payments_gateways';
-        $this->version = '0.9.0';
+        $this->version = '1.0.0';
         $this->author = 'MoneyBadger';
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
@@ -544,7 +545,6 @@ class MoneyBadger extends PaymentModule
             !Configuration::get($id)
             || !Validate::isLoadedObject(new OrderState($id))
         ) {
-
             $order_state = new OrderState();
 
             $tabNameByLangId = []; // Define $tabNameByLangId before using it
@@ -560,15 +560,12 @@ class MoneyBadger extends PaymentModule
                 }
             }
 
-
             $order_state->name = $tabNameByLangId;
             $order_state->invoice = false;
             $order_state->send_email = false;
             $order_state->logable = true;
             $order_state->color = $color;
             $order_state->module_name = $this->name;
-            $order_state->add();
-
             $result = (bool) $order_state->add();
 
             if (false === $result) {
