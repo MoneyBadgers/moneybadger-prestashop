@@ -545,7 +545,6 @@ class MoneyBadger extends PaymentModule
             !Configuration::get($id)
             || !Validate::isLoadedObject(new OrderState($id))
         ) {
-
             $order_state = new OrderState();
 
             $tabNameByLangId = []; // Define $tabNameByLangId before using it
@@ -561,15 +560,12 @@ class MoneyBadger extends PaymentModule
                 }
             }
 
-
             $order_state->name = $tabNameByLangId;
             $order_state->invoice = false;
             $order_state->send_email = false;
             $order_state->logable = true;
             $order_state->color = $color;
             $order_state->module_name = $this->name;
-            $order_state->add();
-
             $result = (bool) $order_state->add();
 
             if (false === $result) {
