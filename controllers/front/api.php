@@ -27,8 +27,8 @@ class moneybadgerAPIModuleFrontController extends ModuleFrontController
         }
 
         header('Content-Type: application/json');
-        $is_paid = $order->current_state === (int) Configuration::get('PS_OS_PAYMENT') ||
-        $order->current_state === (int) Configuration::get('PS_OS_OUTOFSTOCK_PAID');
+        $is_paid = (int) $order->current_state === (int) Configuration::get('PS_OS_PAYMENT') ||
+                    (int) $order->current_state === (int) Configuration::get('PS_OS_OUTOFSTOCK_PAID');
 
         echo json_encode(['is_paid' => $is_paid]);
     }
