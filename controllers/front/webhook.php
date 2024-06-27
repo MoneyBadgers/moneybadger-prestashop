@@ -6,6 +6,10 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
     {
         $order_id = (int) Tools::getValue('order_id');
 
+        $PS_ORDER_STATUS_PAID = (int) Configuration::get('PS_OS_PAYMENT');
+        $PS_ORDER_STATUS_OUTOFSTOCK_PAID = (int) Configuration::get('PS_OS_OUTOFSTOCK_PAID');
+        $PS_ORDER_STATUS_CANCELLED = (int) Configuration::get('PS_OS_CANCELED');
+
         // check if order exists
         if (empty($order_id)) {
             header('HTTP/1.1 404 Not Found');
@@ -20,12 +24,12 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
             exit;
         }
 
-        $orderCurrentState = $order->getCurrentState();
+        $orderCurrentState = (int) $order->getCurrentState();
 
         // check if order is unpaid or already marked paid
         if (
-            $orderCurrentState === (int) Configuration::get('PS_OS_PAYMENT') ||
-            $orderCurrentState === (int) Configuration::get('PS_OS_OUTOFSTOCK_PAID')
+            $orderCurrentState === $PS_ORDER_STATUS_PAID ||
+            $orderCurrentState === $PS_ORDER_STATUS_OUTOFSTOCK_PAID
         ) {
             exit;
         }
@@ -44,17 +48,17 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
 
         switch ($invoice->status) {
             case MoneyBadger::PAYMENT_STATUS_CANCELLED:
-                $order->setCurrentState((int) Configuration::get('PS_OS_CANCELED'));
+                $this->updateOrderStatus($order, $PS_ORDER_STATUS_CANCELLED);
                 break;
             case MoneyBadger::PAYMENT_STATUS_TIMEDOUT:
-                $order->setCurrentState((int) Configuration::get(MoneyBadger::ORDER_STATE_CAPTURE_TIMEDOUT));
+                $this->updateOrderStatus($order, (int) Configuration::get(MoneyBadger::ORDER_STATE_CAPTURE_TIMEDOUT));
                 break;
             case MoneyBadger::PAYMENT_STATUS_AUTHORIZED:
             case MoneyBadger::PAYMENT_STATUS_CONFIRMED:
                 // We expect CONFIRMED, but AUTHORIZED is also valid since we will request auto confirmation
                 // mark the order as paid
-                if ($orderCurrentState !== (int) Configuration::get('PS_OS_OUTOFSTOCK_PAID')) {
-                    $order->setCurrentState((int) Configuration::get('PS_OS_PAYMENT'));
+                if ($orderCurrentState !== $PS_ORDER_STATUS_OUTOFSTOCK_PAID) {
+                    $this->updateOrderStatus($order, $PS_ORDER_STATUS_PAID);
                 }
                 break;
             default:
@@ -117,5 +121,20 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
         $invoice = json_decode($response);
 
         return $invoice;
+    }
+
+    /**
+     * Update the order status
+     *
+     * @param Order $order
+     * @param int $newOrderStatus
+     */
+    private function updateOrderStatus($order, $newOrderStatus)
+    {
+        $orderCurrentState = (int) $order->getCurrentState();
+        // only update the order status if it is not already the new status
+        if ($orderCurrentState !== $newOrderStatus) {
+            $order->setCurrentState($newOrderStatus);
+        }
     }
 }
