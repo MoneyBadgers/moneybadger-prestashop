@@ -55,7 +55,6 @@ class MoneyBadger extends PaymentModule
     ];
 
     const HOOKS = [
-        'actionPaymentCCAdd',
         'actionObjectShopAddAfter',
         'paymentOptions',
         'displayAdminOrderLeft',
@@ -128,57 +127,6 @@ class MoneyBadger extends PaymentModule
     {
         // Redirect to our ModuleAdminController when click on Configure button
         Tools::redirectAdmin($this->context->link->getAdminLink(static::MODULE_ADMIN_CONTROLLER));
-    }
-
-    /**
-     * This hook is used to save additional information will be displayed on BO Order View, Payment block with "Details" button
-     *
-     * @param array $params
-     */
-    public function hookActionPaymentCCAdd(array $params)
-    {
-        if (empty($params['paymentCC'])) {
-            return;
-        }
-
-        /** @var OrderPayment $orderPayment */
-        $orderPayment = $params['paymentCC'];
-
-        if (false === Validate::isLoadedObject($orderPayment) || empty($orderPayment->order_reference)) {
-            return;
-        }
-
-        /** @var Order[] $orderCollection */
-        $orderCollection = Order::getByReference($orderPayment->order_reference);
-
-        foreach ($orderCollection as $order) {
-            if ($this->name !== $order->module) {
-                return;
-            }
-        }
-
-        $cardNumber = Tools::getValue('cardNumber');
-        $cardBrand = Tools::getValue('cardBrand');
-        $cardHolder = Tools::getValue('cardHolder');
-        $cardExpiration = Tools::getValue('cardExpiration');
-
-        if (false === empty($cardNumber) && Validate::isGenericName($cardNumber)) {
-            $orderPayment->card_number = $cardNumber;
-        }
-
-        if (false === empty($cardBrand) && Validate::isGenericName($cardBrand)) {
-            $orderPayment->card_brand = $cardBrand;
-        }
-
-        if (false === empty($cardHolder) && Validate::isGenericName($cardHolder)) {
-            $orderPayment->card_holder = $cardHolder;
-        }
-
-        if (false === empty($cardExpiration) && Validate::isGenericName($cardExpiration)) {
-            $orderPayment->card_expiration = $cardExpiration;
-        }
-
-        $orderPayment->save();
     }
 
     /**

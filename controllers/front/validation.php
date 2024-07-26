@@ -5,7 +5,7 @@
 class MoneyBadgerValidationModuleFrontController extends ModuleFrontController
 {
     /**
-     * @var PaymentModule
+     * @var MoneyBadger
      */
     public $module;
 
@@ -14,74 +14,77 @@ class MoneyBadgerValidationModuleFrontController extends ModuleFrontController
      */
     public function postProcess()
     {
-        if (false === $this->checkIfContextIsValid() || false === $this->checkIfPaymentOptionIsAvailable()) {
+        $cart = $this->context->cart;
+        // Note: $cart->id is null here for some reason ???
+        if (0 === $cart->id_customer || 0 === $cart->id_address_delivery || 0 === $cart->id_address_invoice || false === $this->checkIfPaymentOptionIsAvailable()) {
             Tools::redirect(
                 $this->context->link->getPageLink(
                     'order',
-                    true,
+                    $this->ssl,
                     (int) $this->context->language->id,
                     [
                         'step' => 1,
                     ]
                 )
             );
+            return;
         }
 
-        $customer = new Customer($this->context->cart->id_customer);
-
-        if (false === Validate::isLoadedObject($customer)) {
+        $orderId = (int) Tools::getValue('order_id'); // From URL parameter
+        $order = new Order($orderId);
+        // check if order exists
+        if (empty($orderId) || false === Validate::isLoadedObject($order)) {
             Tools::redirect(
                 $this->context->link->getPageLink(
                     'order',
-                    true,
+                    $this->ssl,
                     (int) $this->context->language->id,
                     [
                         'step' => 1,
                     ]
                 )
             );
+            return;
         }
 
-        $this->module->validateOrder(
-            (int) $this->context->cart->id,
-            (int) $this->getOrderState(),
-            (float) $this->context->cart->getOrderTotal(true, Cart::BOTH),
-            $this->getOptionName(),
-            null,
-            [
-                'transaction_id' => Tools::passwdGen(), // Should be retrieved from your Payment response
-            ],
-            (int) $this->context->currency->id,
-            false,
-            $customer->secure_key
-        );
+        // Make sure customer is loaded and same as for order
+        $customer = new Customer($cart->id_customer);
+
+        // NOTE! $order->id_customer is a string for some reason ???
+        if (false === Validate::isLoadedObject($customer) || (string) $customer->id !== $order->id_customer) {
+            Tools::redirect(
+                $this->context->link->getPageLink(
+                    'order',
+                    $this->ssl,
+                    (int) $this->context->language->id,
+                    [
+                        'step' => 1,
+                    ]
+                )
+            );
+            return;
+        }
+
+        // If it's a guest, send them to guest tracking
+        if (Cart::isGuestCartByCartId($order->id_cart)) {
+			Tools::redirect($this->context->link->getPageLink('guest-tracking', $this->ssl, null, ['order_reference' => $order->reference, 'email' => $customer->email]));
+
+			return;
+		}
 
         Tools::redirect(
             $this->context->link->getPageLink(
                 'order-confirmation',
-                true,
+                $this->ssl,
                 (int) $this->context->language->id,
                 [
-                    'id_cart' => (int) $this->context->cart->id,
+                    'id_cart' => (int) $order->id_cart, // NOTE! can't use $cart->id, it is null ???
                     'id_module' => (int) $this->module->id,
-                    'id_order' => (int) $this->module->currentOrder,
+                    'id_order' => (int) $order->id,
                     'key' => $customer->secure_key,
                 ]
             )
         );
-    }
-
-    /**
-     * Check if the context is valid
-     *
-     * @return bool
-     */
-    private function checkIfContextIsValid()
-    {
-        return true === Validate::isLoadedObject($this->context->cart)
-            && true === Validate::isUnsignedInt($this->context->cart->id_customer)
-            && true === Validate::isUnsignedInt($this->context->cart->id_address_delivery)
-            && true === Validate::isUnsignedInt($this->context->cart->id_address_invoice);
     }
 
     /**
@@ -105,66 +108,6 @@ class MoneyBadgerValidationModuleFrontController extends ModuleFrontController
         }
 
         return false;
-    }
+    }    
 
-    /**
-     * Get OrderState identifier
-     *
-     * @return int
-     */
-    private function getOrderState()
-    {
-        $option = Tools::getValue('option');
-        $orderStateId = (int) Configuration::get('PS_OS_ERROR');
-
-        switch ($option) {
-            case 'offline':
-                // Ensure MoneyBadger::CONFIG_OS_OFFLINE is defined before using it
-                if (defined('MoneyBadger::CONFIG_OS_OFFLINE')) {
-                    $orderStateId = (int) Configuration::get(MoneyBadger::CONFIG_OS_OFFLINE);
-                }
-                break;
-            case 'external':
-                $orderStateId = (int) Configuration::get('PS_OS_WS_PAYMENT');
-                break;
-            case 'iframe':
-            case 'embedded':
-            case 'binary':
-                $orderStateId = (int) Configuration::get('PS_OS_PAYMENT');
-                break;
-        }
-
-        return $orderStateId;
-    }
-
-    /**
-     * Get translated Payment Option name
-     *
-     * @return string
-     */
-    private function getOptionName()
-    {
-        $option = Tools::getValue('option');
-        $name = $this->module->displayName;
-
-        switch ($option) {
-            case 'offline':
-                $name = $this->l('Offline');
-                break;
-            case 'external':
-                $name = $this->l('External');
-                break;
-            case 'iframe':
-                $name = $this->l('Iframe');
-                break;
-            case 'embedded':
-                $name = $this->l('Embedded');
-                break;
-            case 'binary':
-                $name = $this->l('Binary');
-                break;
-        }
-
-        return $name;
-    }
 }

@@ -4,26 +4,22 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
 {
     public function postProcess()
     {
-        $order_id = (int) Tools::getValue('order_id');
-
         $PS_ORDER_STATUS_PAID = (int) Configuration::get('PS_OS_PAYMENT');
         $PS_ORDER_STATUS_OUTOFSTOCK_PAID = (int) Configuration::get('PS_OS_OUTOFSTOCK_PAID');
         $PS_ORDER_STATUS_CANCELLED = (int) Configuration::get('PS_OS_CANCELED');
 
+        $orderId = (int) Tools::getValue('order_id');
         // check if order exists
-        if (empty($order_id)) {
+        if (empty($orderId)) {
             header('HTTP/1.1 404 Not Found');
             exit;
         }
-
-        $order = new Order($order_id);
-
+        $order = new Order($orderId);
         if (!$order->id) {
             // exit with http status 404 if order not found
             header('HTTP/1.1 404 Not Found');
             exit;
         }
-
         $orderCurrentState = (int) $order->getCurrentState();
 
         // check if order is unpaid or already marked paid
@@ -34,19 +30,18 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
             exit;
         }
 
-        $invoice = $this->getInvoice($order_id);
+        $cryptoInvoice = $this->getInvoice($order->reference);
 
         // add transaction id to order payment
         $orderPaymentCollection = $order->getOrderPaymentCollection();
         if ($orderPaymentCollection && $orderPaymentCollection->count()) {
             /** @var OrderPayment $orderPayment */
-            // $orderPayment = $orderPaymentCollection->getLast();
             $orderPayment = $this->getLast($orderPaymentCollection);
-            $orderPayment->transaction_id = $invoice->id;
+            $orderPayment->transaction_id = $cryptoInvoice->id;
             $orderPayment->update();
         }
 
-        switch ($invoice->status) {
+        switch ($cryptoInvoice->status) {
             case MoneyBadger::PAYMENT_STATUS_CANCELLED:
                 $this->updateOrderStatus($order, $PS_ORDER_STATUS_CANCELLED);
                 break;
@@ -56,6 +51,10 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
             case MoneyBadger::PAYMENT_STATUS_AUTHORIZED:
             case MoneyBadger::PAYMENT_STATUS_CONFIRMED:
                 // We expect CONFIRMED, but AUTHORIZED is also valid since we will request auto confirmation
+                // NB: Ensure the order total matches the amount actually paid
+                if ((int) ($order->total_paid * 100) !== (int) $cryptoInvoice->amount_cents) {
+                    throw new PrestaShopException('Order total does not match amount paid');
+                }
                 // mark the order as paid
                 if ($orderCurrentState !== $PS_ORDER_STATUS_OUTOFSTOCK_PAID) {
                     $this->updateOrderStatus($order, $PS_ORDER_STATUS_PAID);
@@ -64,6 +63,7 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
             default:
                 break;
         }
+        echo 'OK';
     }
 
     // Implement getLast because it is not available in PrestaShop 1.7
@@ -124,17 +124,21 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
     }
 
     /**
-     * Update the order status
-     *
-     * @param Order $order
-     * @param int $newOrderStatus
-     */
-    private function updateOrderStatus($order, $newOrderStatus)
-    {
-        $orderCurrentState = (int) $order->getCurrentState();
-        // only update the order status if it is not already the new status
-        if ($orderCurrentState !== $newOrderStatus) {
-            $order->setCurrentState($newOrderStatus);
-        }
-    }
+	 * @param Order $order
+	 * @throws \PrestaShopException
+	 */
+	private function updateOrderStatus(Order $order, string $orderStatus): void
+	{
+        // NOTE: We can't use $order->setCurrentState($newOrderStatus) because it will create a new PAYMENT entry, and we pre-create the payment entry when the iframe is loaded.
+        // $orderHistory->changeIdOrderState must be called with $use_existing_payment = true. This is not documented. Much frustration.
+
+		// Add the order change to the order history table
+        $orderId = (int) $order->id;
+		$orderHistory           = new \OrderHistory();
+		$orderHistory->id_order = $orderId;
+
+		// Store the change and make sure to create an invoice using existing payments (in case the status is changed to 'paid with crypto')
+		$orderHistory->changeIdOrderState($orderStatus, $orderId, true);
+		$orderHistory->add();
+	}
 }
