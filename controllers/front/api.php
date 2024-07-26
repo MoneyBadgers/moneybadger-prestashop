@@ -5,16 +5,18 @@ class moneybadgerAPIModuleFrontController extends ModuleFrontController
     public function displayAjax()
     {
         parent::initContent();
-        $order_id = Tools::getValue('order_id');
+        $cart_id = Tools::getValue('cart_id');
 
-        if (empty($order_id)) {
+        if (empty($cart_id)) {
             header('HTTP/1.1 404 Not Found');
             exit;
         }
 
-        $order = new Order((int) $order_id);
-
+        // Load order from cart ID:
+        $order = new Order((int) Order::getOrderByCartId($cart_id));
         if (false === Validate::isLoadedObject($order)) {
+            // This is expected, the order will only exist later.
+
             // exit with http status 404
             header('HTTP/1.1 404 Not Found');
             exit;

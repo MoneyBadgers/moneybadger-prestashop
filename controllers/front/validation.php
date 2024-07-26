@@ -30,10 +30,25 @@ class MoneyBadgerValidationModuleFrontController extends ModuleFrontController
             return;
         }
 
-        $orderId = (int) Tools::getValue('order_id'); // From URL parameter
-        $order = new Order($orderId);
+        $cartId = (int) Tools::getValue('cart_id'); // From URL parameter
+        $order = new Order((int) Order::getOrderByCartId($cartId));
         // check if order exists
-        if (empty($orderId) || false === Validate::isLoadedObject($order)) {
+        if (false === Validate::isLoadedObject($order)) {
+            Tools::redirect(
+                $this->context->link->getPageLink(
+                    'order',
+                    $this->ssl,
+                    (int) $this->context->language->id,
+                    [
+                        'step' => 1,
+                    ]
+                )
+            );
+            return;
+        }
+
+        // make sure order and cart customer ids match
+        if ((int) $order->id_customer !== (int) $cart->id_customer) {
             Tools::redirect(
                 $this->context->link->getPageLink(
                     'order',

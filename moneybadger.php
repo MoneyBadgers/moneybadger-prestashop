@@ -31,7 +31,6 @@ class MoneyBadger extends PaymentModule
     const CONFIG_PO_IFRAME_ENABLED = 'MONEYBADGER_PO_IFRAME_ENABLED';
     const MODULE_ADMIN_CONTROLLER = 'AdminConfigureMoneyBadger';
 
-    const ORDER_STATE_CAPTURE_WAITING = 'MONEYBADGER_CAPTURE_WAITING';
     const ORDER_STATE_CAPTURE_TIMEDOUT = 'MONEYBADGER_CAPTURE_TIMEDOUT';
     // cancelled and paid statuses are built-in
 
@@ -40,17 +39,13 @@ class MoneyBadger extends PaymentModule
     const PAYMENT_STATUS_CONFIRMED = 'CONFIRMED';
     const PAYMENT_STATUS_TIMEDOUT = 'TIMED_OUT';
     const PAYMENT_STATUS_CANCELLED = 'CANCELLED';
+    const PAYMENT_STATUS_ERRORED = 'ERROR';
 
     const ORDER_STATES = [
         [
-            'id' => self::ORDER_STATE_CAPTURE_WAITING,
-            'color' => '#34209E',
-            'description' => 'Waiting for MoneyBadger capture',
-        ],
-        [
             'id' => self::ORDER_STATE_CAPTURE_TIMEDOUT,
             'color' => '#E74C3C',
-            'description' => 'MoneyBadger capture timed out',
+            'description' => 'Crypto payment timed out',
         ],
     ];
 
