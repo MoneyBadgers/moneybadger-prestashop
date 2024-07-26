@@ -15,3 +15,9 @@ This is the MoneyBadger payments module for PrestaShop. Please feel free to [con
 ## Collaboration
 
 Please submit pull requests with any tweaks, features, or fixes you would like to share.
+
+## Process Flow:
+
+1. Create order from cart (most plugins only create the order after payment).
+2. Display iframe with MoneyBadger payment page. Javacript loaded on iframe keeps polling MoneyBadger API for payment status.
+3. Once payment is complete, javascript poller redirect away from iFrame page to Presta validation page.
