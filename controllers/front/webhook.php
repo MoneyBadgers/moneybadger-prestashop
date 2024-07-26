@@ -127,12 +127,17 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
 	 * @param Order $order
 	 * @throws \PrestaShopException
 	 */
-	private function updateOrderStatus(Order $order, string $orderStatus): void
+	private function updateOrderStatus(Order $order, int $orderStatus): void
 	{
         // NOTE: We can't use $order->setCurrentState($newOrderStatus) because it will create a new PAYMENT entry, and we pre-create the payment entry when the iframe is loaded.
         // $orderHistory->changeIdOrderState must be called with $use_existing_payment = true. This is not documented. Much frustration.
 
 		// Add the order change to the order history table
+        $orderCurrentState = (int) $order->getCurrentState();
+        // only update the order status if it is not already the new status
+        if ($orderCurrentState === $newOrderStatus) {
+            return;
+        }
         $orderId = (int) $order->id;
 		$orderHistory           = new \OrderHistory();
 		$orderHistory->id_order = $orderId;
