@@ -57,6 +57,14 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
 
         $paymentMethodName = $this->module->displayName;
         $customer = new Customer($cart->id_customer);
+
+        // Check again whether order already exists to avoid race condition due to multiple webhooks:
+        $order = new Order((int) Order::getOrderByCartId($cartId));
+        if (true === Validate::isLoadedObject($order)) {
+            echo 'order already exists';
+            exit;
+        }
+
         # Create the order
         $this->module->validateOrder(
             $cartId,
