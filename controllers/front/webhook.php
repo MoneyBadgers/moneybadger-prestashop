@@ -5,64 +5,81 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
     public function postProcess()
     {
         $PS_ORDER_STATUS_PAID = (int) Configuration::get('PS_OS_PAYMENT');
-        $PS_ORDER_STATUS_OUTOFSTOCK_PAID = (int) Configuration::get('PS_OS_OUTOFSTOCK_PAID');
         $PS_ORDER_STATUS_CANCELLED = (int) Configuration::get('PS_OS_CANCELED');
 
-        $orderId = (int) Tools::getValue('order_id');
+        $cartId = (int) Tools::getValue('cart_id');
         // check if order exists
-        if (empty($orderId)) {
+        if (empty($cartId)) {
             header('HTTP/1.1 404 Not Found');
             exit;
         }
-        $order = new Order($orderId);
-        if (!$order->id) {
-            // exit with http status 404 if order not found
+        $cart = new Cart($cartId);
+        // Ensure cart is loaded:
+        if (false === Validate::isLoadedObject($cart)) {
             header('HTTP/1.1 404 Not Found');
             exit;
         }
-        $orderCurrentState = (int) $order->getCurrentState();
 
-        // check if order is unpaid or already marked paid
-        if (
-            $orderCurrentState === $PS_ORDER_STATUS_PAID ||
-            $orderCurrentState === $PS_ORDER_STATUS_OUTOFSTOCK_PAID
-        ) {
+        // Check if order already exists for cart ID, if so, exit
+        $order = new Order((int) Order::getOrderByCartId($cartId));
+        if (true === Validate::isLoadedObject($order)) {
+            echo 'order already exists';
             exit;
         }
 
-        $cryptoInvoice = $this->getInvoice($order->reference);
+        $merchantCode = Configuration::get('MONEYBADGER_MERCHANT_CODE');
+        $cryptoReference = $merchantCode . ((string) $cartId);
+        $cryptoInvoice = $this->getInvoice($cryptoReference);
+        $orderStatus = -1;
+        $orderTotal = (float) $cart->getOrderTotal(true, Cart::BOTH);
 
-        // add transaction id to order payment
-        $orderPaymentCollection = $order->getOrderPaymentCollection();
-        if ($orderPaymentCollection && $orderPaymentCollection->count()) {
-            /** @var OrderPayment $orderPayment */
-            $orderPayment = $this->getLast($orderPaymentCollection);
-            $orderPayment->transaction_id = $cryptoInvoice->id;
-            $orderPayment->update();
-        }
-
+        // Only create order if invoice status is 'CONFIRMED' or 'CANCELLED' or 'TIMEDOUT' or 'ERROR'
         switch ($cryptoInvoice->status) {
             case MoneyBadger::PAYMENT_STATUS_CANCELLED:
-                $this->updateOrderStatus($order, $PS_ORDER_STATUS_CANCELLED);
+                $orderStatus = $PS_ORDER_STATUS_CANCELLED;
                 break;
             case MoneyBadger::PAYMENT_STATUS_TIMEDOUT:
-                $this->updateOrderStatus($order, (int) Configuration::get(MoneyBadger::ORDER_STATE_CAPTURE_TIMEDOUT));
+            case MoneyBadger::PAYMENT_STATUS_ERRORED:
+                $orderStatus = (int) Configuration::get(MoneyBadger::ORDER_STATE_CAPTURE_TIMEDOUT);
                 break;
-            case MoneyBadger::PAYMENT_STATUS_AUTHORIZED:
             case MoneyBadger::PAYMENT_STATUS_CONFIRMED:
-                // We expect CONFIRMED, but AUTHORIZED is also valid since we will request auto confirmation
-                // NB: Ensure the order total matches the amount actually paid
-                if ((int) ($order->total_paid * 100) !== (int) $cryptoInvoice->amount_cents) {
+                // Double check the order total matches the amount actually paid
+                if ((int) ($orderTotal * 100) !== (int) $cryptoInvoice->amount_cents) {
+                    echo 'Order total does not match amount paid';
                     throw new PrestaShopException('Order total does not match amount paid');
                 }
-                // mark the order as paid
-                if ($orderCurrentState !== $PS_ORDER_STATUS_OUTOFSTOCK_PAID) {
-                    $this->updateOrderStatus($order, $PS_ORDER_STATUS_PAID);
-                }
+                $orderStatus = $PS_ORDER_STATUS_PAID;
                 break;
-            default:
-                break;
+            default: // 'REQUESTED' or 'AUTHORIZED' = ignore
+                echo 'ignoring webhook for invoice with status ' . $cryptoInvoice->status;
+                exit;
         }
+
+        $paymentMethodName = $this->module->displayName;
+        $customer = new Customer($cart->id_customer);
+
+        // Check again whether order already exists to avoid race condition due to multiple webhooks:
+        $order = new Order((int) Order::getOrderByCartId($cartId));
+        if (true === Validate::isLoadedObject($order)) {
+            echo 'order already exists';
+            exit;
+        }
+
+        # Create the order
+        $this->module->validateOrder(
+            $cartId,
+            $orderStatus,
+            (float) ($cryptoInvoice->amount_cents / 100.0),
+            $paymentMethodName,
+            null,
+            [
+                'transaction_id' => $cryptoInvoice->id,
+            ],
+            (int) $cart->id_currency,
+            false,
+            $customer->secure_key
+        );
+
         echo 'OK';
     }
 
@@ -127,12 +144,17 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
 	 * @param Order $order
 	 * @throws \PrestaShopException
 	 */
-	private function updateOrderStatus(Order $order, string $orderStatus): void
+	private function updateOrderStatus(Order $order, int $orderStatus): void
 	{
         // NOTE: We can't use $order->setCurrentState($newOrderStatus) because it will create a new PAYMENT entry, and we pre-create the payment entry when the iframe is loaded.
         // $orderHistory->changeIdOrderState must be called with $use_existing_payment = true. This is not documented. Much frustration.
 
 		// Add the order change to the order history table
+        $orderCurrentState = (int) $order->getCurrentState();
+        // only update the order status if it is not already the new status
+        if ($orderCurrentState === $newOrderStatus) {
+            return;
+        }
         $orderId = (int) $order->id;
 		$orderHistory           = new \OrderHistory();
 		$orderHistory->id_order = $orderId;

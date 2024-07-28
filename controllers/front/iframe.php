@@ -46,33 +46,12 @@ class moneybadgerIframeModuleFrontController extends ModuleFrontController
         }
 
         $cartId = (int) $this->context->cart->id;
-        $orderTotal = (float) $this->context->cart->getOrderTotal(true, Cart::BOTH);
-        $paymentMethodName = $this->module->displayName;
-
-        // Note: Pre-create an order in the DB. Most plugins only create the order after the payment is confirmed.
-        $this->module->validateOrder(
-            $cartId,
-            (int) Configuration::get(MoneyBadger::ORDER_STATE_CAPTURE_WAITING),
-            $orderTotal, // NB: This value must be compared to the amount actually paid once payment is confirmed.
-            $paymentMethodName,
-            null,
-            [],
-            (int) $this->context->currency->id,
-            false,
-            $customer->secure_key
-        );
-        // Retrieve newly created order
-        $orderId = (int) $this->module->currentOrder;
-        $order = new Order($orderId);
-        if (false === Validate::isLoadedObject($order)) {
-            throw new PrestaShopException('Failed to load Order for Payment');
-        }
 
         $orderValidationURL = $this->context->link->getModuleLink(
             $this->module->name,
             'validation',
             [
-                'order_id' => $orderId,
+                'cart_id' => $cartId,
             ],
             $this->ssl
         );
@@ -82,7 +61,7 @@ class moneybadgerIframeModuleFrontController extends ModuleFrontController
                 $this->module->name,
                 'webhook',
                 [
-                    'order_id' => $orderId,
+                    'cart_id' => $cartId,
                     'ajax' => true, // Hack to avoid Smarty template error, without ajax Presta will try to render a template which doesn't exist for the webhook
                 ],
                 $this->ssl
@@ -95,7 +74,7 @@ class moneybadgerIframeModuleFrontController extends ModuleFrontController
                 'api',
                 [
                     'ajax' => true,
-                    'order_id' => $orderId,
+                    'cart_id' => $cartId,
                 ],
                 $this->ssl
             )
@@ -104,23 +83,25 @@ class moneybadgerIframeModuleFrontController extends ModuleFrontController
         $merchantCode = Configuration::get('MONEYBADGER_MERCHANT_CODE');
 
         $shopName = Configuration::get('PS_SHOP_NAME');
+        $orderTotal = (float) $this->context->cart->getOrderTotal(true, Cart::BOTH);
         $amountInCents = (int) ($orderTotal * 100);
 
         if ((int) $amountInCents != (int) ($orderTotal * 100)) { // Make sure we don't lose precision
             throw new PrestaShopException('Failed to convert order total to cents');
         }
-        $orderReference = $order->reference;
+        // order reference is merchantCode + cartId
+        $cryptoReference = $merchantCode . ((string) $cartId);
 
         // load the payment form
         $this->context->smarty->assign([
             'src' => 'https://pay' . (Configuration::get('MONEYBADGER_TEST_MODE', false) ? '.staging' : '') . '.cryptoqr.net/?' . http_build_query(
                 [
                     'amountCents' => $amountInCents,
-                    'orderId' => $orderReference,
+                    'orderId' => $cryptoReference,
                     'userId' => $customer->id,
                     'merchantCode' => $merchantCode,
                     'statusWebhookUrl' => $statusWebhookUrl,
-                    'orderDescription' => $shopName . ' - Order #' . $orderReference,
+                    'orderDescription' => $shopName . ' - Cart #' . $cartId,
                     'autoConfirm' => 'true',
                 ]
             ),
