@@ -59,8 +59,8 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
         $customer = new Customer($cart->id_customer);
 
         // Check again whether order already exists to avoid race condition due to multiple webhooks:
-        $order = new Order((int) Order::getOrderByCartId($cartId));
-        if (true === Validate::isLoadedObject($order)) {
+        $orderCheck = new Order((int) Order::getOrderByCartId($cartId));
+        if (true === Validate::isLoadedObject($orderCheck)) {
             echo 'order already exists';
             exit;
         }
