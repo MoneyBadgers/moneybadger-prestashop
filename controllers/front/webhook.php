@@ -42,7 +42,7 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
             case MoneyBadger::PAYMENT_STATUS_ERRORED:
                 $orderStatus = (int) Configuration::get(MoneyBadger::ORDER_STATE_CAPTURE_TIMEDOUT);
                 break;
-            case MoneyBadger::PAYMENT_STATUS_CONFIRMED:
+            case MoneyBadger::PAYMENT_STATUS_AUTHORIZED:
                 // Double check the order total matches the amount actually paid
                 if ((int) ($orderTotal * 100) !== (int) $cryptoInvoice->amount_cents) {
                     echo 'Order total does not match amount paid';
@@ -50,7 +50,7 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
                 }
                 $orderStatus = $PS_ORDER_STATUS_PAID;
                 break;
-            default: // 'REQUESTED' or 'AUTHORIZED' = ignore
+            default: // 'REQUESTED' or 'CONFIRMED' = ignore
                 echo 'ignoring webhook for invoice with status ' . $cryptoInvoice->status;
                 exit;
         }
@@ -59,11 +59,14 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
         $customer = new Customer($cart->id_customer);
 
         // Check again whether order already exists to avoid race condition due to multiple webhooks:
-        $order = new Order((int) Order::getOrderByCartId($cartId));
-        if (true === Validate::isLoadedObject($order)) {
+        $orderCheck = new Order((int) Order::getOrderByCartId($cartId));
+        if (true === Validate::isLoadedObject($orderCheck)) {
             echo 'order already exists';
             exit;
         }
+
+        // Confirm the order with MoneyBadger
+        $this->confirmInvoice($cryptoReference);
 
         # Create the order
         $this->module->validateOrder(
@@ -92,6 +95,53 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
         }
 
         return $collection[count($collection) - 1];
+    }
+
+    /**
+     * Confirm the invoice from MoneyBadger
+     *
+     * @param int $invoiceId
+     *
+     * @return mixed
+     *
+     * @throws Exception if the cURL request fails or returns a non-200 status code
+     */
+    private function confirmInvoice($invoiceId)
+    {
+        $merchantAPIKey = Configuration::get('MONEYBADGER_MERCHANT_API_KEY', '');
+
+        $apiBase = 'https://api' . (Configuration::get('MONEYBADGER_TEST_MODE', false) ? '.staging' : '') . '.cryptoqr.net/api/v2';
+        $url = $apiBase . '/invoices/' . $invoiceId . '/confirm';
+
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'X-API-Key: ' . $merchantAPIKey,
+        ]);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        if ($response === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            throw new \Exception("cURL request failed: $error");
+        }
+
+        if ($httpCode !== 200) {
+            curl_close($ch);
+            throw new \Exception("Invoice confirm failed with status: $httpCode");
+        }
+
+        curl_close($ch);
+
+        $invoice = json_decode($response);
+
+        return $invoice;
     }
 
     /**
