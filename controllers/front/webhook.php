@@ -30,7 +30,7 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
         $merchantCode = Configuration::get('MONEYBADGER_MERCHANT_CODE');
         $cryptoReference = $merchantCode . ((string) $cartId);
         $cryptoInvoice = $this->getInvoice($cryptoReference);
-        $orderStatus = -1;
+        $orderStatus = $PS_ORDER_STATUS_CANCELLED;
         $orderTotal = (float) $cart->getOrderTotal(true, Cart::BOTH);
 
         // Only create order if invoice status is 'CONFIRMED' or 'CANCELLED' or 'TIMEDOUT' or 'ERROR'
@@ -44,11 +44,9 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
                 break;
             case MoneyBadger::PAYMENT_STATUS_AUTHORIZED:
                 // Double check the order total matches the amount actually paid
-                if ((int) ($orderTotal * 100) !== (int) $cryptoInvoice->amount_cents) {
-                    echo 'Order total does not match amount paid';
-                    throw new PrestaShopException('Order total does not match amount paid');
+                if ((int) ($orderTotal * 100) === (int) $cryptoInvoice->amount_cents) {
+                    $orderStatus = $PS_ORDER_STATUS_PAID;
                 }
-                $orderStatus = $PS_ORDER_STATUS_PAID;
                 break;
             default: // 'REQUESTED' or 'CONFIRMED' = ignore
                 echo 'ignoring webhook for invoice with status ' . $cryptoInvoice->status;
@@ -65,8 +63,10 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
             exit;
         }
 
-        // Confirm the order with MoneyBadger
-        $this->confirmInvoice($cryptoReference);
+        // Confirm the order with MoneyBadger if it's paid
+        if ($orderStatus === $PS_ORDER_STATUS_PAID) {
+            $this->confirmInvoice($cryptoReference);
+        }
 
         # Create the order
         $this->module->validateOrder(
