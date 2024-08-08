@@ -51,8 +51,8 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
 
         // Otherwise it is paid and the correct amount is paid - confirm with MB
         $this->confirmInvoice($cartReference);
-
         // Then create the order
+        $orderStatus = $PS_ORDER_STATUS_PAID;
         $paymentMethodName = $this->module->displayName;
         $customer = new Customer($cart->id_customer);
 

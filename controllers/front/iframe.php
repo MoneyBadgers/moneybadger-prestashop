@@ -83,6 +83,7 @@ class moneybadgerIframeModuleFrontController extends ModuleFrontController
         );
 
         $shopName = Configuration::get('PS_SHOP_NAME');
+        $merchantCode = Configuration::get('MONEYBADGER_MERCHANT_CODE');
         $orderTotal = (float) $this->context->cart->getOrderTotal(true, Cart::BOTH);
         $amountInCents = (int) ($orderTotal * 100);
 
@@ -103,7 +104,7 @@ class moneybadgerIframeModuleFrontController extends ModuleFrontController
                     'autoConfirm' => 'true',
                 ]
             ),
-            'invoiceId' => $orderId,
+            'invoiceId' => $cartReference,
             'orderStatusURL' => $orderStatusAJAXUrl,
             'orderValidationURL' => $orderValidationURL,
         ]);
