@@ -46,12 +46,14 @@ class moneybadgerIframeModuleFrontController extends ModuleFrontController
         }
 
         $cartId = (int) $this->context->cart->id;
+        # Add random string so multiple payment requests may be created for the same cart
+        $cartReference = $cryptoReference = $cartId . '-' . Tools::passwdGen(6);
 
         $orderValidationURL = $this->context->link->getModuleLink(
             $this->module->name,
             'validation',
             [
-                'cart_id' => $cartId,
+                'cart_ref' => $cartReference,
             ],
             $this->ssl
         );
@@ -61,7 +63,7 @@ class moneybadgerIframeModuleFrontController extends ModuleFrontController
                 $this->module->name,
                 'webhook',
                 [
-                    'cart_id' => $cartId,
+                    'cart_ref' => $cartReference,
                     'ajax' => true, // Hack to avoid Smarty template error, without ajax Presta will try to render a template which doesn't exist for the webhook
                 ],
                 $this->ssl
@@ -74,30 +76,27 @@ class moneybadgerIframeModuleFrontController extends ModuleFrontController
                 'api',
                 [
                     'ajax' => true,
-                    'cart_id' => $cartId,
+                    'cart_ref' => $cartReference,
                 ],
                 $this->ssl
             )
         );
 
-        $merchantCode = Configuration::get('MONEYBADGER_MERCHANT_CODE');
-
         $shopName = Configuration::get('PS_SHOP_NAME');
+        $merchantCode = Configuration::get('MONEYBADGER_MERCHANT_CODE');
         $orderTotal = (float) $this->context->cart->getOrderTotal(true, Cart::BOTH);
         $amountInCents = (int) ($orderTotal * 100);
 
         if ((int) $amountInCents != (int) ($orderTotal * 100)) { // Make sure we don't lose precision
             throw new PrestaShopException('Failed to convert order total to cents');
         }
-        // order reference is merchantCode + cartId
-        $cryptoReference = $merchantCode . ((string) $cartId);
 
         // load the payment form
         $this->context->smarty->assign([
             'src' => 'https://pay' . (Configuration::get('MONEYBADGER_TEST_MODE', false) ? '.staging' : '') . '.cryptoqr.net/?' . http_build_query(
                 [
                     'amountCents' => $amountInCents,
-                    'orderId' => $cryptoReference,
+                    'orderId' => $cartReference,
                     'userId' => $customer->id,
                     'merchantCode' => $merchantCode,
                     'statusWebhookUrl' => $statusWebhookUrl,
@@ -105,7 +104,7 @@ class moneybadgerIframeModuleFrontController extends ModuleFrontController
                     'autoConfirm' => 'true',
                 ]
             ),
-            'invoiceId' => $orderId,
+            'invoiceId' => $cartReference,
             'orderStatusURL' => $orderStatusAJAXUrl,
             'orderValidationURL' => $orderValidationURL,
         ]);

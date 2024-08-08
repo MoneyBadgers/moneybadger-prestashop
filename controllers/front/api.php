@@ -5,15 +5,20 @@ class moneybadgerAPIModuleFrontController extends ModuleFrontController
     public function displayAjax()
     {
         parent::initContent();
-        $cart_id = Tools::getValue('cart_id');
-
-        if (empty($cart_id)) {
+        $cartReference = Tools::getValue('cart_ref');
+        if (empty($cartReference)) {
+            header('HTTP/1.1 404 Not Found');
+            exit;
+        }
+        // cart reference is in the format of cartId-randomString
+        $cartId = (int) explode('-', $cartReference)[0];
+        if (empty($cartId)) {
             header('HTTP/1.1 404 Not Found');
             exit;
         }
 
         // Load order from cart ID:
-        $order = new Order((int) Order::getOrderByCartId($cart_id));
+        $order = new Order((int) Order::getOrderByCartId($cartId));
         if (false === Validate::isLoadedObject($order)) {
             // This is expected, the order will only exist later.
 

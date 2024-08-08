@@ -30,7 +30,18 @@ class MoneyBadgerValidationModuleFrontController extends ModuleFrontController
             return;
         }
 
-        $cartId = (int) Tools::getValue('cart_id'); // From URL parameter
+        $cartReference = Tools::getValue('cart_ref');
+        if (empty($cartReference)) {
+            header('HTTP/1.1 404 Not Found');
+            exit;
+        }
+        // cart reference is in the format of cartId-randomString
+        $cartId = (int) explode('-', $cartReference)[0];
+        if (empty($cartId)) {
+            header('HTTP/1.1 404 Not Found');
+            exit;
+        }
+
         $order = new Order((int) Order::getOrderByCartId($cartId));
         // check if order exists
         if (false === Validate::isLoadedObject($order)) {

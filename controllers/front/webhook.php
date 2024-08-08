@@ -7,12 +7,18 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
         $PS_ORDER_STATUS_PAID = (int) Configuration::get('PS_OS_PAYMENT');
         $PS_ORDER_STATUS_CANCELLED = (int) Configuration::get('PS_OS_CANCELED');
 
-        $cartId = (int) Tools::getValue('cart_id');
-        // check if order exists
+        $cartReference = Tools::getValue('cart_ref');
+        if (empty($cartReference)) {
+            header('HTTP/1.1 404 Not Found');
+            exit;
+        }
+        // cart reference is in the format of cartId-randomString
+        $cartId = (int) explode('-', $cartReference)[0];
         if (empty($cartId)) {
             header('HTTP/1.1 404 Not Found');
             exit;
         }
+
         $cart = new Cart($cartId);
         // Ensure cart is loaded:
         if (false === Validate::isLoadedObject($cart)) {
@@ -27,46 +33,35 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
             exit;
         }
 
-        $merchantCode = Configuration::get('MONEYBADGER_MERCHANT_CODE');
-        $cryptoReference = $merchantCode . ((string) $cartId);
-        $cryptoInvoice = $this->getInvoice($cryptoReference);
-        $orderStatus = -1;
-        $orderTotal = (float) $cart->getOrderTotal(true, Cart::BOTH);
+        $cryptoInvoice = $this->getInvoice($cartReference);
 
-        // Only create order if invoice status is 'CONFIRMED' or 'CANCELLED' or 'TIMEDOUT' or 'ERROR'
-        switch ($cryptoInvoice->status) {
-            case MoneyBadger::PAYMENT_STATUS_CANCELLED:
-                $orderStatus = $PS_ORDER_STATUS_CANCELLED;
-                break;
-            case MoneyBadger::PAYMENT_STATUS_TIMEDOUT:
-            case MoneyBadger::PAYMENT_STATUS_ERRORED:
-                $orderStatus = (int) Configuration::get(MoneyBadger::ORDER_STATE_CAPTURE_TIMEDOUT);
-                break;
-            case MoneyBadger::PAYMENT_STATUS_AUTHORIZED:
-                // Double check the order total matches the amount actually paid
-                if ((int) ($orderTotal * 100) !== (int) $cryptoInvoice->amount_cents) {
-                    echo 'Order total does not match amount paid';
-                    throw new PrestaShopException('Order total does not match amount paid');
-                }
-                $orderStatus = $PS_ORDER_STATUS_PAID;
-                break;
-            default: // 'REQUESTED' or 'CONFIRMED' = ignore
-                echo 'ignoring webhook for invoice with status ' . $cryptoInvoice->status;
-                exit;
+        // Only create the order if invoice status is "authorized"
+        if ($cryptoInvoice->status !== MoneyBadger::PAYMENT_STATUS_AUTHORIZED) {
+            echo 'ignoring webhook for invoice with status ' . $cryptoInvoice->status;
+            exit;
         }
 
+        // If the amount is incorrect, cancel the crypto payment
+        $orderTotal = (float) $cart->getOrderTotal(true, Cart::BOTH);
+        if ((int) ($orderTotal * 100) !== (int) $cryptoInvoice->amount_cents) {
+            $this->cancelInvoice($cartReference);
+            echo 'amount mismatch, cancelling invoice';
+            exit;
+        }
+
+        // Otherwise it is paid and the correct amount is paid - confirm with MB
+        $this->confirmInvoice($cartReference);
+        // Then create the order
+        $orderStatus = $PS_ORDER_STATUS_PAID;
         $paymentMethodName = $this->module->displayName;
         $customer = new Customer($cart->id_customer);
 
-        // Check again whether order already exists to avoid race condition due to multiple webhooks:
+        // Check whether order already exists to avoid race condition due to multiple webhooks:
         $orderCheck = new Order((int) Order::getOrderByCartId($cartId));
         if (true === Validate::isLoadedObject($orderCheck)) {
             echo 'order already exists';
             exit;
         }
-
-        // Confirm the order with MoneyBadger
-        $this->confirmInvoice($cryptoReference);
 
         # Create the order
         $this->module->validateOrder(
@@ -97,10 +92,15 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
         return $collection[count($collection) - 1];
     }
 
+    private function moneyBadgerAPIBase()
+    {
+        return 'https://api' . (Configuration::get('MONEYBADGER_TEST_MODE', false) ? '.staging' : '') . '.cryptoqr.net/api/v2';
+    }
+
     /**
      * Confirm the invoice from MoneyBadger
      *
-     * @param int $invoiceId
+     * @param string $invoiceId
      *
      * @return mixed
      *
@@ -110,7 +110,7 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
     {
         $merchantAPIKey = Configuration::get('MONEYBADGER_MERCHANT_API_KEY', '');
 
-        $apiBase = 'https://api' . (Configuration::get('MONEYBADGER_TEST_MODE', false) ? '.staging' : '') . '.cryptoqr.net/api/v2';
+        $apiBase = $this->moneyBadgerAPIBase();
         $url = $apiBase . '/invoices/' . $invoiceId . '/confirm';
 
         $ch = curl_init();
@@ -145,9 +145,57 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
     }
 
     /**
+     * Cancel the invoice from MoneyBadger
+     *
+     * @param string $invoiceId
+     *
+     * @return mixed
+     *
+     * @throws Exception if the cURL request fails or returns a non-200 status code
+     */
+    private function cancelInvoice($invoiceId)
+    {
+        $merchantAPIKey = Configuration::get('MONEYBADGER_MERCHANT_API_KEY', '');
+
+        $apiBase = $this->moneyBadgerAPIBase();
+        $url = $apiBase . '/invoices/' . $invoiceId . '/cancel';
+
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'X-API-Key: ' . $merchantAPIKey,
+        ]);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        if ($response === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            throw new \Exception("cURL request failed: $error");
+        }
+
+        if ($httpCode !== 200) {
+            curl_close($ch);
+            throw new \Exception("Invoice confirm failed with status: $httpCode");
+        }
+
+        curl_close($ch);
+
+        $invoice = json_decode($response);
+
+        return $invoice;
+    }
+
+
+    /**
      * Get the invoice from MoneyBadger
      *
-     * @param int $invoiceId
+     * @param string $invoiceId
      *
      * @return mixed
      *
@@ -157,7 +205,7 @@ class moneybadgerWebhookModuleFrontController extends ModuleFrontController
     {
         $merchantAPIKey = Configuration::get('MONEYBADGER_MERCHANT_API_KEY', '');
 
-        $apiBase = 'https://api' . (Configuration::get('MONEYBADGER_TEST_MODE', false) ? '.staging' : '') . '.cryptoqr.net/api/v2';
+        $apiBase = $this->moneyBadgerAPIBase();
         $url = $apiBase . '/invoices/' . $invoiceId;
 
         $ch = curl_init();
