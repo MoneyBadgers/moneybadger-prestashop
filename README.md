@@ -21,3 +21,10 @@ Please submit pull requests with any tweaks, features, or fixes you would like t
 1. Create order from cart (most plugins only create the order after payment).
 2. Display iframe with MoneyBadger payment page. Javacript loaded on iframe keeps polling MoneyBadger API for payment status.
 3. Once payment is complete, javascript poller redirect away from iFrame page to Presta validation page.
+
+## Testing:
+
+### Make sure to test all following scenarios:
+- A payment is completed successfully: the cart is cleared and an order is created in the correct state and with an associated payment.
+- A payment is made for the wrong amount (e.g. cart is updated while in payment page): the cart is cleared and no order is created, the MB invoice is cancelled
+- A payment times out or is cancelled: The cart is not cleared and further payment attempts can be made.
