@@ -66,7 +66,7 @@ class MoneyBadger extends PaymentModule
     {
         $this->name = 'moneybadger';
         $this->tab = 'payments_gateways';
-        $this->version = '1.0.0';
+        $this->version = '1.0.1';
         $this->author = 'MoneyBadger';
         $this->currencies = true;
         $this->currencies_mode = 'checkbox';
