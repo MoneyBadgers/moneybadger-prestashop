@@ -46,7 +46,7 @@ class AdminConfigureMoneyBadgerController extends ModuleAdminController
                     'MONEYBADGER_LABEL' => [
                         'title' => $this->l('Custom Label (leave blank for default)'),
                         'type' => 'text',
-                        'default' => 'Pay with Crypto - Bitcoin Lightning, Luno, Valr or Binance',
+                        'default' => 'Pay with Crypto - Bitcoin Lightning, VALR, Luno and Binance',
                         'required' => false,
                     ],
                 ],

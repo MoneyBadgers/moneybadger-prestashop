@@ -84,7 +84,7 @@ class MoneyBadger extends PaymentModule
         parent::__construct();
 
         $this->displayName = $this->l('MoneyBadger Crypto Payments');
-        $this->description = $this->l('Accept crypto payments from Bitcoin Lightning, Luno, Valr or Binance wallets');
+        $this->description = $this->l('Accept crypto payments from Bitcoin Lightning, VALR, Luno and Binance wallets');
     }
 
     /**
@@ -442,7 +442,7 @@ class MoneyBadger extends PaymentModule
     public function getIframePaymentOption()
     {
         $iframeOption = new PaymentOption();
-        $description = 'Pay with Crypto - Bitcoin Lightning, Luno, Valr or Binance';
+        $description = 'Pay with Crypto - Bitcoin Lightning, VALR, Luno and Binance';
         if (!empty(Configuration::get('MONEYBADGER_LABEL'))) {
             $description = Configuration::get('MONEYBADGER_LABEL');
         }
